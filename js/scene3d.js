@@ -23,6 +23,7 @@ function mats(){
  M.wood=std(0xb98d5b,{roughness:.8});M.soil=std(0x4f3b2a,{roughness:.95});M.leaf=std(0x4f9a45,{roughness:.7});M.leaf2=std(0x6aa84f,{roughness:.7});
  M.tan=std(0xd9c29a);M.sage=std(0x9db58a);M.slate=std(0x7b8da0);
  M.hop1=std(0x6aa84f,{roughness:.5});M.hop2=std(0x8b5a2b,{roughness:.6});M.hop3=std(0x4a90c2,{roughness:.4});
+ M.acc=[std(0x4f9a45),std(0x3f78b8),std(0xc47a2c),std(0x2f8f8a)];M.cab0=std(0x9db58a);M.tank=std(0xd9dde0,{metalness:.6,roughness:.3});
  M.glow=new THREE.MeshBasicMaterial({color:0xd9a93b});M.white2=new THREE.MeshBasicMaterial({color:0xffffff});
 }
 const B=(w,h,d,m,x,y,z,p)=>{const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y,z);if(p)p.add(o);return o};
@@ -41,21 +42,27 @@ const ray=new THREE.Raycaster(),ndc=new THREE.Vector2();
 /* ---------- 单元：通用台架（铝型材机架 + 下柜 + 控制面板 + 触摸屏 + 三色灯） ---------- */
 function bench(i){
  const g=new THREE.Group();g.position.x=UX[i];g.userData.unit=i;
- const W=4.2,D=2.0;
+ const W=[4.4,3.8,4.4,4.0][i],D=2.0,ac=M.acc[i];
  [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(s=>{B(.12,TOP-.12,.12,M.alu,s[0]*(W/2-.08),(TOP-.12)/2+.12,s[1]*(D/2-.08),g);Cy(.07,.07,.06,M.dark,s[0]*(W/2-.08),.03,s[1]*(D/2-.08),g)});
  B(W,.1,D,M.aluD,0,TOP-.05,0,g);B(W-.2,.04,D-.2,M.aluD,0,.18,0,g);
- B(W-.2,.62,.03,M.dark,0,.5,-D/2+.1,g);
- for(let k=0;k<5;k++)B(.34,.22,.05,k%2?M.green:M.dark,-1.5+k*.7,.55,-D/2+.14,g);
-  [-1,1].forEach(s=>{B(W/2-.15,.52,.02,M.glass,s*W/4,.48,D/2-.08,g);B(W/2-.12,.03,.04,M.alu,s*W/4,.75,D/2-.08,g);B(.04,.52,.04,M.alu,s*(W/4-.9),.48,D/2-.08,g)});
- B(.05,.2,.05,M.alu,0,.48,D/2-.04,g);
- B(W-.2,.3,.06,M.white,0,TOP-.27,D/2+.0,g);
+ const door=m=>[-1,1].forEach(s=>{B(W/2-.15,.54,.03,m,s*W/4,.48,D/2-.08,g);B(.03,.22,.04,M.alu,s*.14,.5,D/2-.05,g)});
+ if(i===0){
+  B(W-.2,.62,.03,M.dark,0,.5,-D/2+.1,g);for(let k=0;k<5;k++)B(.34,.22,.05,k%2?M.green:M.dark,-1.5+k*.7,.55,-D/2+.14,g);door(M.cab0)}
+ else if(i===1){
+  B(W-.4,.06,.24,M.aluD,0,.7,-D/2+.25,g);[-1.2,-.4,.4].forEach((x,k)=>B(.5,.36,.3,k===1?M.blue:M.white,x,.37,.15,g));B(.9,.2,.3,M.dark,1.0,.3,.1,g);[-1,1].forEach(s=>B(.04,.5,.04,M.alu,s*(W/2-.3),.45,D/2-.1,g))}
+ else if(i===2){
+  B(W-.2,.62,.03,M.dark,0,.5,-D/2+.1,g);door(M.alu);[-1,1].forEach(s=>{const p=Cy(.14,.14,.03,M.glass,s*W/4,.5,D/2-.05,g,20);p.rotation.x=Math.PI/2});
+  [-1.5,-.7].forEach(x=>{Cy(.28,.28,.9,M.tank,x,.45,-D/2-.4,g,24);Cy(.3,.3,.05,ac,x,.92,-D/2-.4,g,24)})}
+ else {
+  B(W-.2,.62,.03,M.dark,0,.5,-D/2+.1,g);door(M.dark);[-1,1].forEach(s=>B(W/2-.4,.34,.02,M.glass,s*W/4,.5,D/2-.055,g))}
+ B(W-.2,.3,.06,M.white,0,TOP-.27,D/2+.0,g);B(W-.2,.05,.08,ac,0,TOP-.11,D/2+.0,g);B(W,.03,.04,ac,0,TOP-.0,D/2-.02,g);
  const es=Cy(.07,.07,.05,M.red,-1.65,TOP-.27,D/2+.045,g);es.rotation.x=Math.PI/2;
  const gg=Cy(.08,.08,.04,M.white,-1.3,TOP-.27,D/2+.04,g);gg.rotation.x=Math.PI/2;
  [-.85,-.55,-.25,.05].forEach(x=>{B(.15,.2,.04,M.dark,x,TOP-.27,D/2+.04,g);B(.05,.05,.02,M.yellow,x,TOP-.24,D/2+.07,g)});
  [[.8,M.red],[1.0,M.green],[1.2,M.red],[1.4,M.orange]].forEach(a=>{const b=Cy(.055,.055,.04,a[1],a[0],TOP-.27,D/2+.05,g);b.rotation.x=Math.PI/2});
  // 触摸屏
  const hm=new THREE.Group();hm.position.set(-1.5,TOP+.02,.72);g.add(hm);
- B(.5,.36,.3,M.white,0,.18,0,hm);const sc=B(.4,.26,.02,M.screen,0,.22,.16,hm);sc.rotation.x=-.25;B(.3,.04,.01,M.screenOk,-.02,.27,.172,hm).rotation.x=-.25;
+ B(.5,.36,.3,ac,0,.18,0,hm);const sc=B(.4,.26,.02,M.screen,0,.22,.16,hm);sc.rotation.x=-.25;B(.3,.04,.01,M.screenOk,-.02,.27,.172,hm).rotation.x=-.25;
  // 三色灯
  Cy(.03,.03,.7,M.alu,1.85,TOP+.35,-.8,g);
  const lamps=[0xd8372d,0xf2c230,0x2f9e44].map((c,k)=>{const m=std(c,{roughness:.3,emissive:0x000000});const l=Cy(.075,.075,.1,m,1.85,TOP+.78-k*.11,-.8,g);return {m:m,c:c}});
@@ -67,11 +74,11 @@ function bench(i){
 /* ---------- 各单元上部结构 ---------- */
 function storage(o){const g=o.g;
  const cols=[M.tan,M.sage,M.slate,M.tan,M.sage];
- [[-1.5,-.95],[1.5,-.95],[-1.5,-.45],[1.5,-.45]].forEach(p=>B(.06,1.6,.06,M.alu,p[0],TOP+.8,p[1],g));
- for(let l=0;l<3;l++){const y=TOP+.12+l*.5;B(3.06,.04,.56,M.aluD,0,y,-.7,g);for(let k=0;k<5;k++)B(.5,.3,.42,cols[(k+l)%5],-1.2+k*.6,y+.19,-.7,g)}
- B(3.06,.04,.56,M.aluD,0,TOP+1.62,-.7,g);
- B(3.3,.05,.06,M.alu,0,TOP+.06,.58,g);B(3.3,.05,.06,M.alu,0,TOP+1.55,.58,g);
- const st=new THREE.Group();st.position.set(0,0,.58);g.add(st);B(.1,1.5,.1,M.orange,0,TOP+.8,0,st);B(.3,.18,.18,M.dark,0,TOP+1.5,0,st);
+ [[-1.5,-.95],[1.5,-.95],[-1.5,-.45],[1.5,-.45]].forEach(p=>B(.06,2.1,.06,M.alu,p[0],TOP+1.05,p[1],g));
+ for(let l=0;l<4;l++){const y=TOP+.12+l*.5;B(3.06,.04,.56,M.aluD,0,y,-.7,g);for(let k=0;k<5;k++)B(.5,.3,.42,cols[(k+l)%5],-1.2+k*.6,y+.19,-.7,g)}
+ B(3.06,.04,.56,M.aluD,0,TOP+2.12,-.7,g);
+ B(3.3,.05,.06,M.alu,0,TOP+.06,.58,g);B(3.3,.05,.06,M.alu,0,TOP+2.05,.58,g);
+ const st=new THREE.Group();st.position.set(0,0,.58);g.add(st);B(.1,2.0,.1,M.orange,0,TOP+1.05,0,st);B(.3,.18,.18,M.dark,0,TOP+2.0,0,st);
  const fk=new THREE.Group();st.add(fk);B(.45,.04,.3,M.alu,0,0,-.14,fk);B(.5,.06,.06,M.dark,0,.04,0,fk);
  o.stacker=st;o.fork=fk}
 function transport(o){const g=o.g;
@@ -91,7 +98,7 @@ function mixing(o){const g=o.g;
  const pd=new THREE.Group();pd.position.set(1.15,TOP+.78,-.5);g.add(pd);B(.62,.04,.07,M.orange,0,0,0,pd);B(.07,.04,.62,M.orange,0,.12,0,pd);
  Cy(.05,.05,.5,M.alu,1.15,TOP+.3,-.28,g);const nz=Cy(.13,.04,.24,M.alu,1.15,TOP+.62,.0,g);B(.07,.07,.5,M.alu,1.15,TOP+.68,-.25,g);
  o.paddle=pd}
-function inspect(o){const g=o.g;
+function inspect(o){const g=o.g,ac=M.acc[3];
  [[-.95,-.8],[.95,-.8],[-.95,.8],[.95,.8]].forEach(p=>B(.1,1.55,.1,M.alu,p[0],TOP+.78,p[1],g));
  B(2.0,.1,.1,M.alu,0,TOP+1.55,-.8,g);B(2.0,.1,.1,M.alu,0,TOP+1.55,.8,g);
  B(.08,.08,1.7,M.aluD,0,TOP+1.45,0,g);
@@ -101,6 +108,7 @@ function inspect(o){const g=o.g;
  const arm=new THREE.Group();arm.position.set(1.45,TOP+.18,.4);g.add(arm);Cy(.07,.07,.2,M.alu,0,0,0,arm);const ab=B(.9,.06,.08,M.orange,.45,0,0,arm);
  B(.62,.26,.46,M.red,1.75,TOP+.14,.95,g);
  Cy(.025,.025,.7,M.alu,-1.6,TOP+.35,.72,g);const mon=B(.62,.4,.04,M.dark,-1.6,TOP+.88,.72,g);mon.rotation.x=-.15;const ms=B(.54,.32,.01,M.screen,-1.6,TOP+.88,.745,g);ms.rotation.x=-.15;B(.2,.16,.01,M.screenOk,-1.72,TOP+.92,.752,g).rotation.x=-.15;
+ B(2.2,.08,.12,ac,0,TOP+1.64,-.8,g);B(2.2,.08,.12,ac,0,TOP+1.64,.8,g);
  o.cam=cr;o.arm=arm}
 
 function linkBelt(cx,len,src){const g=new THREE.Group();g.position.x=cx;B(len,.06,.6,M.belt,0,BY-.03,0,g);[-1,1].forEach(s=>{B(len,.1,.04,M.alu,0,BY+.04,s*.34,g);B(.05,BY-.08,.05,M.alu,-len/2+.1,(BY-.08)/2,s*.3,g);B(.05,BY-.08,.05,M.alu,len/2-.1,(BY-.08)/2,s*.3,g)});
@@ -120,7 +128,7 @@ function build(){
  for(let i=0;i<4;i++){const p=new THREE.Mesh(new THREE.PlaneGeometry(5.0,3.0),std(0xdfe9cd,{roughness:1}));p.rotation.x=-Math.PI/2;p.position.set(UX[i],.012,0);p.receiveShadow=true;scene.add(p);
   const e=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.PlaneGeometry(5.0,3.0)),new THREE.LineBasicMaterial({color:0x9db58a}));e.rotation.x=-Math.PI/2;e.position.set(UX[i],.016,0);scene.add(e)}
  const bs=[bench(0),bench(1),bench(2),bench(3)];storage(bs[0]);transport(bs[1]);mixing(bs[2]);inspect(bs[3]);
- [-5.6,0,5.6].forEach((x,k)=>linkBelt(x,1.4,k));linkBelt(-11.45,1.9,0);linkBelt(11.45,1.9,3);
+ [-5.6,0,5.6].forEach((x,k)=>linkBelt(x,1.9,k));linkBelt(-11.45,1.9,0);linkBelt(11.45,1.9,3);
  for(let k=0;k<7;k++){const c=crate();c.userData.x=-12+k*3.4;c.position.set(c.userData.x,BY,0);c.traverse(m=>{if(m.isMesh)m.castShadow=true});scene.add(c);crates.push(c)}
  // 作物区（背景）
  const beds=new THREE.Group();scene.add(beds);for(let r=0;r<2;r++){const bd=B(26,.28,1.7,M.soil,0,.14,-6.2-r*2.6,beds);bd.receiveShadow=true;B(26.2,.08,1.8,M.wood,0,.3,-6.2-r*2.6,beds)}
@@ -167,7 +175,7 @@ function frame(){raf=requestAnimationFrame(frame);if(!ok||!host)return;const dt=
  stripes.forEach(s=>{const v=SPEED[(ST.units[s.unit]||{st:'run'}).st];s.off=((s.off||0)+dt*.9*v)%s.sp;let x=((s.k*s.sp+s.off)%s.len)-s.len/2+s.sp/2;s.m.position.x=x});
  // 各单元动作
  const a0=U[0],a1=U[1],a2=U[2],a3=U[3];
- a0.ph=(a0.ph||0)+dt*.6*sp(0);a0.stacker.position.x=Math.sin(a0.ph)*1.2;a0.fork.position.y=TOP+.7+Math.sin((a0.ph2=(a0.ph2||0)+dt*.9*sp(0)))*.45;
+ a0.ph=(a0.ph||0)+dt*.6*sp(0);a0.stacker.position.x=Math.sin(a0.ph)*1.2;a0.fork.position.y=TOP+.85+Math.sin((a0.ph2=(a0.ph2||0)+dt*.9*sp(0)))*.7;
  a1.pph=(a1.pph||0)+dt*1.6*sp(1);a1.pusher.position.z=.95-Math.max(0,Math.sin(a1.pph))*.45;
  a2.paddle.rotation.y+=dt*3.2*sp(2);
  a3.cph=(a3.cph||0)+dt*.8*sp(3);a3.cam.position.z=Math.sin(a3.cph)*.7;a3.rph=(a3.rph||0)+dt*sp(3);const rp=(a3.rph%6)/6;a3.arm.rotation.y=rp>.7&&rp<.9?-Math.sin((rp-.7)/.2*Math.PI)*.9:0;
