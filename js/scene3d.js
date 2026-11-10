@@ -202,7 +202,8 @@ function build(){
  camera=new THREE.PerspectiveCamera(36,2,.1,200);const p=preset('all',0);camera.position.copy(p.pos);
  controls=new OrbitControls(camera,renderer.domElement);controls.target.copy(p.tgt);controls.enableDamping=true;controls.dampingFactor=.08;controls.minDistance=5;controls.maxDistance=42;controls.maxPolarAngle=1.48;controls.addEventListener('start',()=>{ST.goal=null});controls.update();
 }
-function preset(mode,sel){if(mode==='focus'){const x=UX[sel];return {pos:new V3(x+3.9,3.7,6.4),tgt:new V3(x,1.5,0)}}if(mode==='trace')return {pos:new V3(0,14.5,14.2),tgt:new V3(0,.2,1.0)};return {pos:new V3(0,9.4,17.4),tgt:new V3(0,.3,1.4)}}
+function dolly(v,t,k){return v.clone().sub(t).multiplyScalar(k).add(t)}
+function preset(mode,sel){const asp=host&&host.clientHeight?host.clientWidth/host.clientHeight:2,k=Math.max(.62,Math.min(1,2.1/asp));if(mode==='focus'){const x=UX[sel];return {pos:new V3(x+3.9,3.7,6.4),tgt:new V3(x,1.5,0)}}if(mode==='trace'){const t=new V3(0,.2,1.0);return {pos:dolly(new V3(0,14.5,14.2),t,k),tgt:t}}const t=new V3(0,.3,1.4);return {pos:dolly(new V3(0,9.4,17.4),t,k),tgt:t}}
 
 /* ---------- 标签与交互 ---------- */
 function makeLabels(){labelsEl=document.createElement('div');labelsEl.className='lbls3d';
@@ -214,7 +215,7 @@ function bindPointer(){const el=renderer.domElement;let dn=null;
  el.addEventListener('pointermove',e=>{if(e.buttons)return;const i=hit(e);ST.hover=i;el.style.cursor=i>=0?'pointer':'grab'})}
 function hit(e){const r=renderer.domElement.getBoundingClientRect();ndc.set(((e.clientX-r.left)/r.width)*2-1,-((e.clientY-r.top)/r.height)*2+1);ray.setFromCamera(ndc,camera);
  const h=ray.intersectObjects(U.map(u=>u.g),true);for(const x of h){let o=x.object;while(o&&o.userData.unit===undefined)o=o.parent;if(o)return o.userData.unit}return -1}
-function resize(){if(!ok||!host)return;const w=host.clientWidth,h=host.clientHeight;if(!w||!h)return;renderer.setPixelRatio(Math.max(1,Math.min(2,(window.devicePixelRatio||1)*ST.scale)));renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()}
+function resize(){if(!ok||!host)return;const w=host.clientWidth,h=host.clientHeight;if(!w||!h)return;renderer.setPixelRatio(Math.max(1,Math.min(2,(window.devicePixelRatio||1)*ST.scale)));renderer.setSize(w,h,false);camera.aspect=w/h;if(!ST._asp||Math.abs(ST._asp-w/h)/(w/h)>.05){ST._asp=w/h;if(ST.mode!=='focus'&&ST.mode)ST.goal=preset(ST.mode,ST.sel)}camera.updateProjectionMatrix()}
 let ro=null;
 
 /* ---------- 动画 ---------- */
